@@ -2,7 +2,6 @@ package com.gachlab.capacitor.kiosk;
 
 import android.app.ActivityManager;
 import android.content.Context;
-
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
@@ -13,9 +12,7 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 public class KioskModePlugin extends Plugin {
 
     private boolean checkKioskState() {
-        ActivityManager am = (ActivityManager) getActivity()
-                .getApplicationContext()
-                .getSystemService(Context.ACTIVITY_SERVICE);
+        ActivityManager am = (ActivityManager) getActivity().getApplicationContext().getSystemService(Context.ACTIVITY_SERVICE);
         return am.getLockTaskModeState() > ActivityManager.LOCK_TASK_MODE_NONE;
     }
 
