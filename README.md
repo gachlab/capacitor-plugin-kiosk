@@ -79,6 +79,34 @@ toggleKioskMode() => Promise<void>
 
 Toggles kiosk mode based on the current state.
 
+---
+
+### addListener('kioskEntered', ...)
+
+```typescript
+addListener(
+  eventName: 'kioskEntered',
+  listenerFunc: (event: { timestamp: number }) => void,
+) => Promise<PluginListenerHandle>
+```
+
+Fires when the app enters kiosk (lock task) mode. `timestamp` is the epoch time in milliseconds.
+
+---
+
+### addListener('kioskExited', ...)
+
+```typescript
+addListener(
+  eventName: 'kioskExited',
+  listenerFunc: (event: { reason: 'user' | 'system' | 'api'; timestamp: number }) => void,
+) => Promise<PluginListenerHandle>
+```
+
+Fires when the app leaves kiosk mode. `reason` is `'api'` when triggered by `exitKioskMode()`, or `'user'` when the exit is detected on the next foreground.
+
+Android does not push lock-task changes to normal apps, so a user/system exit performed while the app is backgrounded is only detected when the activity next resumes (latency). Real-time detection requires the app to be Device Owner; `'system'` is reserved for that future detector.
+
 ## Migration from v1
 
 v2 is a breaking change due to the Capacitor 5 → 8 upgrade:
