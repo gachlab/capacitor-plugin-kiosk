@@ -36,19 +36,27 @@ adb shell am start -n "${PACKAGE}/${ACTIVITY}"
 # Wait until the WebView has registered the listeners so the auto-sequence's
 # events are delivered to JS (the addListener call is logged by the bridge).
 echo "→ Waiting for the WebView to register the kiosk listeners"
-if ! timeout 90 bash -c 'until adb logcat -d 2>/dev/null | grep -q "addListener.*kioskEntered"; do sleep 2; done'; then
-  echo "✗ kioskEntered listener never registered within 90 s"
-  adb logcat -d | grep -iE "Capacitor|chromium|console|error" | tail -30
-  exit 1
-fi
+LISTENER_END=$(( $(date +%s) + 90 ))
+until adb logcat -d 2>/dev/null | grep -q "addListener.*kioskEntered"; do
+  if [[ $(date +%s) -ge $LISTENER_END ]]; then
+    echo "✗ kioskEntered listener never registered within 90 s"
+    adb logcat -d | grep -iE "Capacitor|chromium|console|error" | tail -30
+    exit 1
+  fi
+  sleep 2
+done
 
 # The auto-sequence fires kioskExited last; seeing it means both events fired.
 echo "→ Waiting for the auto-sequence to complete (kioskExited delivered)"
-if ! timeout 90 bash -c 'until adb logcat -d 2>/dev/null | grep -q "\[KIOSK-E2E\] event:kioskExited"; do sleep 2; done'; then
-  echo "✗ kiosk auto-sequence never completed (startLockTask may have been rejected)"
-  adb logcat -d | grep -iE "Capacitor|KioskMode|lock_task|SecurityException|chromium|console|error" | tail -40
-  exit 1
-fi
+SEQ_END=$(( $(date +%s) + 90 ))
+until adb logcat -d 2>/dev/null | grep -q "\[KIOSK-E2E\] event:kioskExited"; do
+  if [[ $(date +%s) -ge $SEQ_END ]]; then
+    echo "✗ kiosk auto-sequence never completed (startLockTask may have been rejected)"
+    adb logcat -d | grep -iE "Capacitor|KioskMode|lock_task|SecurityException|chromium|console|error" | tail -40
+    exit 1
+  fi
+  sleep 2
+done
 
 adb logcat -d > "$LOGCAT_OUT" 2>&1 || true
 
