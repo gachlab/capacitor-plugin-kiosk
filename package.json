@@ -1,6 +1,6 @@
 {
   "name": "@gachlab/capacitor-kiosk",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Capacitor plugin for Android kiosk mode (Lock Task). Pin your app to the screen and prevent users from leaving.",
   "type": "module",
   "main": "dist/plugin.cjs.js",
