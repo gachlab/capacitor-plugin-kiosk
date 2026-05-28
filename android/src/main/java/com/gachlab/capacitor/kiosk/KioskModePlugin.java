@@ -11,14 +11,14 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 @CapacitorPlugin(name = "KioskMode")
 public class KioskModePlugin extends Plugin {
 
-    private boolean lastKioskState;
+    private final KioskStateManager stateManager = new KioskStateManager();
 
     @Override
     public void load() {
         try {
-            lastKioskState = checkKioskState();
+            stateManager.seed(checkKioskState());
         } catch (Exception e) {
-            lastKioskState = false;
+            stateManager.seed(false);
         }
     }
 
@@ -30,31 +30,22 @@ public class KioskModePlugin extends Plugin {
     @Override
     protected void handleOnResume() {
         try {
-            boolean current = checkKioskState();
-            if (current != lastKioskState) {
-                if (current) {
-                    emitKioskEntered();
-                } else {
-                    emitKioskExited("user");
-                }
-                lastKioskState = current;
-            }
+            KioskStateManager.Event ev = stateManager.onObserved(checkKioskState());
+            if (ev != null) emit(ev);
         } catch (Exception e) {
             // Activity not available; nothing to report.
         }
     }
 
-    private void emitKioskEntered() {
+    private void emit(KioskStateManager.Event ev) {
         JSObject data = new JSObject();
         data.put("timestamp", System.currentTimeMillis());
-        notifyListeners("kioskEntered", data);
-    }
-
-    private void emitKioskExited(String reason) {
-        JSObject data = new JSObject();
-        data.put("reason", reason);
-        data.put("timestamp", System.currentTimeMillis());
-        notifyListeners("kioskExited", data);
+        if (ev.transition == KioskStateManager.Transition.ENTERED) {
+            notifyListeners("kioskEntered", data);
+        } else {
+            data.put("reason", ev.reason);
+            notifyListeners("kioskExited", data);
+        }
     }
 
     private boolean checkKioskState() {
@@ -77,8 +68,7 @@ public class KioskModePlugin extends Plugin {
     public void enterKioskMode(PluginCall call) {
         try {
             getActivity().startLockTask();
-            lastKioskState = true;
-            emitKioskEntered();
+            emit(stateManager.onEnterApi());
             call.resolve();
         } catch (SecurityException e) {
             call.reject("Cannot enter kiosk mode: app must be device owner or activity must be whitelisted", e);
@@ -91,8 +81,7 @@ public class KioskModePlugin extends Plugin {
     public void exitKioskMode(PluginCall call) {
         try {
             getActivity().stopLockTask();
-            lastKioskState = false;
-            emitKioskExited("api");
+            emit(stateManager.onExitApi());
             call.resolve();
         } catch (SecurityException e) {
             call.reject("Cannot exit kiosk mode: app must be device owner", e);
