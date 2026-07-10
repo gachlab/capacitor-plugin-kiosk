@@ -1,0 +1,9 @@
+{
+  "appId": "com.gachlab.capacitor.kiosk.example",
+  "appName": "Kiosk Example",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true
+  }
+}
